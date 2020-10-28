@@ -22,24 +22,48 @@ func Get() (*redis.Client, context.Context) {
 	once.Do(func() {
 		threads := len(config.Threads) + 10
 
-		redisClient = redis.NewClient(&redis.Options{
-			Addr:         config.Config.Redis.Host,
-			Password:     config.Config.Redis.Password,
-			MaxRetries:   10,
-			PoolSize:     threads,
-			DialTimeout:  5 * time.Second,
-			ReadTimeout:  30 * time.Second,
-			WriteTimeout: 5 * time.Second,
-			PoolTimeout:  1 * time.Second,
-			DB:           config.Config.Redis.DB,
-		})
+		var redisOptions *redis.Options
+
+		if len(config.Config.Redis.URL) > 0 {
+			var err error
+
+			redisOptions, err = redis.ParseURL(config.Config.Redis.URL)
+
+			if err != nil {
+				log.Println("Invalid Redis URL provided.", err)
+
+				return
+			}
+		} else {
+			redisOptions = &redis.Options{
+				Addr:     config.Config.Redis.Host,
+				Password: config.Config.Redis.Password,
+				DB:       config.Config.Redis.DB,
+			}
+		}
+
+		redisOptions.MaxRetries = 10
+		redisOptions.PoolSize = threads
+		redisOptions.DialTimeout = 5 * time.Second
+		redisOptions.ReadTimeout = 30 * time.Second
+		redisOptions.WriteTimeout = 5 * time.Second
+		redisOptions.PoolTimeout = 1 * time.Second
+
+		redisClient = redis.NewClient(redisOptions)
 
 		for {
 			err := redisClient.Ping(ctx).Err()
 			if err == nil {
 				break
 			}
-			log.Println("Can't reach redis at", config.Config.Redis.Host, "-- are your redis addr and password right?", err)
+
+			host := config.Config.Redis.Host
+
+			if len(config.Config.Redis.URL) > 0 {
+				host = config.Config.Redis.URL
+			}
+
+			log.Println("Can't reach redis at", host, "-- are your redis addr and password right?", err)
 			time.Sleep(5 * time.Second)
 		}
 	})

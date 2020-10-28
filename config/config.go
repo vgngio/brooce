@@ -40,6 +40,7 @@ type ConfigType struct {
 	} `json:"file_output_log"`
 
 	Redis struct {
+		URL      string `json:"url,omitempty"`
 		Host     string `json:"host"`
 		Password string `json:"password"`
 		DB       int    `json:"db"`
