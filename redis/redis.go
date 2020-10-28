@@ -3,19 +3,22 @@
 package redis
 
 import (
+	"context"
 	"log"
 	"sync"
 	"time"
 
 	"brooce/config"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 )
+
+var ctx = context.Background()
 
 var redisClient *redis.Client
 var once sync.Once
 
-func Get() *redis.Client {
+func Get() (*redis.Client, context.Context) {
 	once.Do(func() {
 		threads := len(config.Threads) + 10
 
@@ -32,7 +35,7 @@ func Get() *redis.Client {
 		})
 
 		for {
-			err := redisClient.Ping().Err()
+			err := redisClient.Ping(ctx).Err()
 			if err == nil {
 				break
 			}
@@ -41,13 +44,13 @@ func Get() *redis.Client {
 		}
 	})
 
-	return redisClient
+	return redisClient, ctx
 }
 
 func FlushList(src, dst string) (err error) {
-	redisClient := Get()
+	redisClient, ctx := Get()
 	for err == nil {
-		_, err = redisClient.RPopLPush(src, dst).Result()
+		_, err = redisClient.RPopLPush(ctx, src, dst).Result()
 	}
 
 	if err == redis.Nil {
@@ -58,10 +61,10 @@ func FlushList(src, dst string) (err error) {
 }
 
 func ScanKeys(match string) (keys []string, err error) {
-	redisClient := Get()
+	redisClient, ctx := Get()
 
-	iter := redisClient.Scan(0, match, 10000).Iterator()
-	for iter.Next() {
+	iter := redisClient.Scan(ctx, 0, match, 10000).Iterator()
+	for iter.Next(ctx) {
 		keys = append(keys, iter.Val())
 	}
 	err = iter.Err()

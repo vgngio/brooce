@@ -7,7 +7,7 @@ import (
 	"brooce/heartbeat"
 	"brooce/task"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 )
 
 type QueueInfoType struct {
@@ -66,12 +66,12 @@ func Queues(short bool) (queueHash map[string]*QueueInfoType, err error) {
 		return
 	}
 
-	_, err = redisClient.Pipelined(func(pipe redis.Pipeliner) error {
+	_, err = redisClient.Pipelined(ctx, func(pipe redis.Pipeliner) error {
 		for name, queue := range queueHash {
-			queue.pendingResult = pipe.LLen(fmt.Sprintf("%s:queue:%s:pending", redisHeader, name))
-			queue.doneResult = pipe.LLen(fmt.Sprintf("%s:queue:%s:done", redisHeader, name))
-			queue.failedResult = pipe.LLen(fmt.Sprintf("%s:queue:%s:failed", redisHeader, name))
-			queue.delayedResult = pipe.LLen(fmt.Sprintf("%s:queue:%s:delayed", redisHeader, name))
+			queue.pendingResult = pipe.LLen(ctx, fmt.Sprintf("%s:queue:%s:pending", redisHeader, name))
+			queue.doneResult = pipe.LLen(ctx, fmt.Sprintf("%s:queue:%s:done", redisHeader, name))
+			queue.failedResult = pipe.LLen(ctx, fmt.Sprintf("%s:queue:%s:failed", redisHeader, name))
+			queue.delayedResult = pipe.LLen(ctx, fmt.Sprintf("%s:queue:%s:delayed", redisHeader, name))
 		}
 		return nil
 	})

@@ -12,11 +12,11 @@ import (
 	myredis "brooce/redis"
 	"brooce/util"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 )
 
 var redisHeader = config.Config.ClusterName
-var redisClient = myredis.Get()
+var redisClient, ctx = myredis.Get()
 
 func Start() {
 	go func() {
@@ -40,9 +40,9 @@ func scheduleCrons() error {
 	maxSchedCatchup := 24 * time.Hour
 
 	var lockValueCmd *redis.StringCmd
-	_, err := redisClient.Pipelined(func(pipe redis.Pipeliner) error {
-		pipe.SetNX(lockKey, config.Config.ProcName, lockttl)
-		lockValueCmd = pipe.Get(lockKey)
+	_, err := redisClient.Pipelined(ctx, func(pipe redis.Pipeliner) error {
+		pipe.SetNX(ctx, lockKey, config.Config.ProcName, lockttl)
+		lockValueCmd = pipe.Get(ctx, lockKey)
 		return nil
 	})
 	if err != nil {
@@ -55,14 +55,14 @@ func scheduleCrons() error {
 		return nil
 	}
 
-	schedThroughUnixtimeStr, _ := redisClient.Get(schedThroughKey).Result()
+	schedThroughUnixtimeStr, _ := redisClient.Get(ctx, schedThroughKey).Result()
 	schedThroughUnixtime, _ := strconv.ParseInt(schedThroughUnixtimeStr, 10, 64)
 
 	start := time.Unix(schedThroughUnixtime, 0)
 	start = zeroOutSeconds(start)
 	start = start.Add(time.Minute)
 
-	end, err := redisClient.Time().Result()
+	end, err := redisClient.Time(ctx).Result()
 	if err != nil {
 		end = time.Now()
 	}
@@ -72,10 +72,10 @@ func scheduleCrons() error {
 		start = end
 	}
 
-	_, err = redisClient.Pipelined(func(pipe redis.Pipeliner) error {
+	_, err = redisClient.Pipelined(ctx, func(pipe redis.Pipeliner) error {
 		scheduleCronsForTimeRange(pipe, start, end)
-		pipe.Set(schedThroughKey, end.Unix(), maxSchedCatchup)
-		pipe.Expire(lockKey, lockttl)
+		pipe.Set(ctx, schedThroughKey, end.Unix(), maxSchedCatchup)
+		pipe.Expire(ctx, lockKey, lockttl)
 		return nil
 	})
 
@@ -118,6 +118,6 @@ func scheduleCronsForTimeRange(pipe redis.Pipeliner, start time.Time, end time.T
 		//log.Printf("Scheduling job %s", cronName)
 
 		pendingList := strings.Join([]string{redisHeader, "queue", cronJob.Queue, "pending"}, ":")
-		pipe.LPush(pendingList, cronJob.Task().Json())
+		pipe.LPush(ctx, pendingList, cronJob.Task().Json())
 	}
 }

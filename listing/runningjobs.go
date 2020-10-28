@@ -6,10 +6,10 @@ import (
 	myredis "brooce/redis"
 	"brooce/task"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 )
 
-var redisClient = myredis.Get()
+var redisClient, ctx = myredis.Get()
 var redisHeader = config.Config.ClusterName
 
 // SCAN takes about 0.5s per million total items in redis
@@ -48,9 +48,9 @@ func RunningJobs(fast bool) (jobs []*task.Task, err error) {
 	}
 
 	values := make([]*redis.StringCmd, len(keys))
-	_, err = redisClient.Pipelined(func(pipe redis.Pipeliner) error {
+	_, err = redisClient.Pipelined(ctx, func(pipe redis.Pipeliner) error {
 		for i, key := range keys {
-			values[i] = pipe.LIndex(key, 0)
+			values[i] = pipe.LIndex(ctx, key, 0)
 		}
 		return nil
 	})

@@ -22,7 +22,7 @@ func crons(disabled bool) (crons map[string]*cron.CronType, err error) {
 	}
 
 	var results map[string]string
-	results, err = redisClient.HGetAll(cronKey).Result()
+	results, err = redisClient.HGetAll(ctx, cronKey).Result()
 	if err != nil || len(results) == 0 {
 		return
 	}

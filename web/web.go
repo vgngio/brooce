@@ -16,7 +16,7 @@ import (
 	"brooce/web/tpl"
 )
 
-var redisClient = myredis.Get()
+var redisClient, ctx = myredis.Get()
 var redisHeader = config.Config.ClusterName
 var redisLogHeader = config.Config.ClusterLogName
 

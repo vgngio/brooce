@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 )
 
 func (task *RunnableTask) WriteLog(str string) {
@@ -44,11 +44,11 @@ func (task *RunnableTask) Flush() {
 		return
 	}
 
-	_, err := redisClient.Pipelined(func(pipe redis.Pipeliner) error {
-		pipe.Append(task.LogKey(), task.buffer.String())
+	_, err := redisClient.Pipelined(ctx, func(pipe redis.Pipeliner) error {
+		pipe.Append(ctx, task.LogKey(), task.buffer.String())
 
 		if task.RedisLogExpireAfter() > 0 {
-			pipe.Expire(task.LogKey(), time.Duration(task.RedisLogExpireAfter())*time.Second)
+			pipe.Expire(ctx, task.LogKey(), time.Duration(task.RedisLogExpireAfter())*time.Second)
 		}
 		return nil
 	})
@@ -81,7 +81,7 @@ func (task *RunnableTask) StopFlushingLog() {
 
 func (task *RunnableTask) GenerateId() (err error) {
 	var counter int64
-	counter, err = redisClient.Incr(redisHeader + ":counter").Result()
+	counter, err = redisClient.Incr(ctx, redisHeader+":counter").Result()
 
 	if err == nil {
 		task.Id = fmt.Sprintf("%v", counter)

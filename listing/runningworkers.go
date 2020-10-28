@@ -10,7 +10,7 @@ import (
 func RunningWorkers() (workers []*heartbeat.HeartbeatType, err error) {
 	redisKey := redisHeader + ":workerprocs"
 	var results map[string]string
-	results, err = redisClient.HGetAll(redisKey).Result()
+	results, err = redisClient.HGetAll(ctx, redisKey).Result()
 	if err != nil || len(results) == 0 {
 		return
 	}
@@ -20,7 +20,7 @@ func RunningWorkers() (workers []*heartbeat.HeartbeatType, err error) {
 		err = json.Unmarshal([]byte(str), worker)
 
 		if err != nil || worker.HeartbeatTooOld() || worker.IsLocalZombie() {
-			err = redisClient.HDel(redisKey, hKey).Err()
+			err = redisClient.HDel(ctx, redisKey, hKey).Err()
 			if err != nil {
 				return
 			}

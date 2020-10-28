@@ -17,7 +17,7 @@ import (
 var heartbeatEvery = 30 * time.Second
 var assumeDeadAfter = 95 * time.Second
 
-var redisClient = myredis.Get()
+var redisClient, ctx = myredis.Get()
 var once sync.Once
 
 type HeartbeatType struct {
@@ -98,7 +98,7 @@ func Start() {
 
 func heartbeat() {
 	key := fmt.Sprintf("%s:workerprocs", config.Config.ClusterName)
-	err := redisClient.HSet(key, config.Config.ProcName, makeHeartbeat()).Err()
+	err := redisClient.HSet(ctx, key, config.Config.ProcName, makeHeartbeat()).Err()
 	if err != nil {
 		log.Println("redis heartbeat error:", err)
 	}

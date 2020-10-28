@@ -9,7 +9,7 @@ import (
 	"brooce/config"
 	myredis "brooce/redis"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 )
 
 type Task struct {
@@ -68,9 +68,11 @@ func PopulateHasLog(tasks []*Task) {
 	}
 
 	hasLog := make([]*redis.IntCmd, len(tasksWithId))
-	_, err := myredis.Get().Pipelined(func(pipe redis.Pipeliner) error {
+	redisClient, ctx := myredis.Get()
+
+	_, err := redisClient.Pipelined(ctx, func(pipe redis.Pipeliner) error {
 		for i, task := range tasksWithId {
-			hasLog[i] = pipe.Exists(task.LogKey())
+			hasLog[i] = pipe.Exists(ctx, task.LogKey())
 		}
 		return nil
 	})
