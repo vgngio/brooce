@@ -206,12 +206,14 @@ func initDefaultConfig() {
 		}
 	}
 
-	if Config.Redis.Host == "" {
-		Config.Redis.Host = "localhost"
-	}
+	if len(Config.Redis.URL) == 0 {
+		if Config.Redis.Host == "" {
+			Config.Redis.Host = "localhost"
+		}
 
-	if !strings.Contains(Config.Redis.Host, ":") {
-		Config.Redis.Host = Config.Redis.Host + ":6379"
+		if !strings.Contains(Config.Redis.Host, ":") {
+			Config.Redis.Host = Config.Redis.Host + ":6379"
+		}
 	}
 
 	if Config.Suicide.Enable {
