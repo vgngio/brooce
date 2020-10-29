@@ -32,7 +32,7 @@ Brooce uses redis as its database. Redis can be accessed from any programming la
 This is simplest, and will get you running immediately.
 ```shell
 sudo apt-get install redis-server
-wget https://github.com/SergeyTsalkov/brooce/releases/download/v1.4.0/brooce
+wget https://github.com/vgngio/brooce/releases/download/v1.5.0/brooce
 chmod 755 brooce
 ./brooce
 ```
@@ -41,7 +41,7 @@ chmod 755 brooce
 You must have Go 1.11 or newer installed.
 ```shell
 sudo apt-get install redis-server
-git clone https://github.com/SergeyTsalkov/brooce.git
+git clone https://github.com/vgngio/brooce.git
 cd brooce
 go build
 ./brooce
