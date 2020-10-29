@@ -24,6 +24,7 @@ The first time brooce runs, it will create a `~/.brooce` dir in your home direct
     "enable": false
   },
   "redis": {
+    "url": "",
     "host": "localhost:6379",
     "password": "",
     "db": 0
@@ -71,6 +72,9 @@ Set to true to disable the web server.
  
 ### `file_output_log.enable`
 By default, job stdout/stderr is only logged to redis for review through the web interface. If you turn this on, the `~/.brooce` folder will get a logfile for every worker.
+
+### `redis.url`
+If supplied, it overrides host, password and db. For example: `rediss://user:password@host:port/db_number`
 
 ### `redis.host` / `redis.password`
 The hostname and password to access your redis server. Defaults to localhost and no-password.
